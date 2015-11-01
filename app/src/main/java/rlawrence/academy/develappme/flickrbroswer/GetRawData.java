@@ -11,7 +11,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Created by rlawrence on 10/23/15.
+ * Created by Raquel Lawrence on 10/23/15.
  */
 
 enum DownloadStatus {IDLE, PROCESSING, NOT_INITIALIZED, FAILED_OR_EMPTY, OK };

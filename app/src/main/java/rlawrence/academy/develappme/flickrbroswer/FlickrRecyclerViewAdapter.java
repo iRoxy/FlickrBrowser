@@ -2,6 +2,7 @@ package rlawrence.academy.develappme.flickrbroswer;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ public class FlickrRecyclerViewAdapter extends RecyclerView.Adapter<FlickrImageV
 {
     private List<Photo> mphotoList;
     private Context mContext;
+    private final String LOG_TAG = FlickrRecyclerViewAdapter.class.getSimpleName();
 
     public FlickrRecyclerViewAdapter(Context context, List<Photo> photosList)
     {
@@ -41,15 +43,28 @@ public class FlickrRecyclerViewAdapter extends RecyclerView.Adapter<FlickrImageV
     public void onBindViewHolder(FlickrImageViewHolder flickrImageViewHolder, int i)
     {
         Photo photoItem = mphotoList.get(i);
-        Picasso.with(mContext).load(photoItem.getmImage()) //download this image
+        Log.d(LOG_TAG, "Processing: " + photoItem.getTitle() + " --> " + Integer.toString(i));
+
+        Picasso.with(mContext).load(photoItem.getImage()) //download this image
                 .error(R.drawable.placeholder) // if error show this image
                 .placeholder(R.drawable.placeholder) // show while downloading
                 .into(flickrImageViewHolder.thumbnail); // puts into ImageView in XML
-        flickrImageViewHolder.title.setText(photoItem.getmTitle());
+        flickrImageViewHolder.title.setText(photoItem.getTitle());
     }
 
     @Override
     public int getItemCount() {
         return (null != mphotoList ? mphotoList.size() : 0);
+    }
+
+    public void loadNewData(List<Photo> newPhotos)
+    {
+        mphotoList = newPhotos;
+        notifyDataSetChanged();
+    }
+
+    public Photo getPhoto(int position)
+    {
+        return (null != mphotoList ? mphotoList.get(position) : null);
     }
 }

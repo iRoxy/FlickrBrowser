@@ -1,16 +1,22 @@
 package rlawrence.academy.develappme.flickrbroswer;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity
+/** Created by Raquel Lawrence **/
+
+public class MainActivity extends BaseActivity
 {
     private String LOG_TAG = MainActivity.class.getSimpleName();
     private List<Photo> mPhotosList = new ArrayList<Photo>();
@@ -23,15 +29,34 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        activateToolbar();
+
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        ProcessPhotos processPhotos = new ProcessPhotos("android,lollipop", true);
-        processPhotos.execute();
+        flickrRecyclerViewAdapter = new FlickrRecyclerViewAdapter(MainActivity.this,
+                new ArrayList<Photo>());
+        mRecyclerView.setAdapter(flickrRecyclerViewAdapter);
+        mRecyclerView.addOnItemTouchListener(new RecyclerItemClickListener(this,
+                mRecyclerView, new RecyclerItemClickListener.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position)
+            {
+                Toast.makeText(MainActivity.this, "Normal tap", Toast.LENGTH_SHORT).show();
+            }
 
-        //GetRawData theRawData = new GetRawData("http://api.flickr.com/services/feeds/photos_public.gne?tags=android,lollipop&format=json&nojsoncallback=1");
-        //GetFlickrJsonData jsonData = new GetFlickrJsonData("android,lollipop", true);
-        //jsonData.execute();
+            @Override
+            public void onItemLongClick(View view, int position)
+            {
+//                Toast.makeText(MainActivity.this, "Long tap", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, ViewPhotoDetailsActivity.class);
+
+                // additional data to be sent to and accessed by next activity
+                intent.putExtra(PHOTO_TRANSFER, flickrRecyclerViewAdapter.getPhoto(position));
+                startActivity(intent);
+
+            }
+        }));
     }
 
 
@@ -57,7 +82,33 @@ public class MainActivity extends AppCompatActivity
             return true;
         }
 
+        if(id == R.id.menu_search)
+        {
+            Intent intent = new Intent(this, SearchActivity.class);
+            startActivity(intent);
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        String query = getSavedPreferenceData(FLICKR_QUERY);
+        if (query.length() > 0)
+        {
+            ProcessPhotos processPhotos = new ProcessPhotos(query, true);
+            processPhotos.execute();
+        }
+    }
+
+    private String getSavedPreferenceData(String key)
+    {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        return sharedPref.getString(key, "");
+
     }
 
     public class ProcessPhotos extends GetFlickrJsonData
@@ -79,11 +130,8 @@ public class MainActivity extends AppCompatActivity
             protected void onPostExecute(String webData)
             {
                 super.onPostExecute(webData);
-                flickrRecyclerViewAdapter = new FlickrRecyclerViewAdapter(MainActivity.this, getMPhotos());
-                mRecyclerView.setAdapter(flickrRecyclerViewAdapter);
+                flickrRecyclerViewAdapter.loadNewData(getPhotos());
             }
-
-
         }
     }
 }
